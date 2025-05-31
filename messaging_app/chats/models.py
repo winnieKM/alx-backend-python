@@ -1,25 +1,35 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# Custom User model extending AbstractUser to add extra fields if needed
-class User(AbstractUser):
-    # Add extra fields here if needed, for now we keep it simple
-    pass
 
-# Conversation model - tracks users involved in conversation
+class User(AbstractUser):
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'phone_number']
+    USERNAME_FIELD = 'email'
+
+    def __str__(self):
+        return self.email
+
+
 class Conversation(models.Model):
+    conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     participants = models.ManyToManyField(User, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Conversation {self.id}"
+        return f"Conversation {self.conversation_id}"
 
-# Message model - a message sent by a user inside a conversation
+
 class Message(models.Model):
-    conversation = models.ForeignKey(Conversation, related_name='messages', on_delete=models.CASCADE)
-    sender = models.ForeignKey(User, related_name='messages_sent', on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    message_body = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Message {self.id} by {self.sender.username}"
+        return f"Message from {self.sender.email} at {self.sent_at}"
