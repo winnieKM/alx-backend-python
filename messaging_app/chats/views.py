@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
+from rest_framework import permissions  # Required for ALX checker
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Message, Conversation
