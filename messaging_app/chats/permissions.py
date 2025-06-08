@@ -2,7 +2,8 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsParticipantOfConversation(BasePermission):
     """
-    Permission to allow only participants of a conversation to access it.
+    Custom permission to allow only participants of a conversation to 
+    send, view, update (PATCH), or delete messages.
     """
 
     def has_permission(self, request, view):
@@ -10,9 +11,14 @@ class IsParticipantOfConversation(BasePermission):
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        # SAFE_METHODS are GET, HEAD, OPTIONS - allow only if participant
-        if request.method in SAFE_METHODS:
+        # If obj is a Conversation
+        if hasattr(obj, 'participants'):
             return request.user in obj.participants.all()
 
-        # For unsafe methods (POST, PUT, DELETE), allow only if user is participant
-        return request.user in obj.participants.all()
+        # If obj is a Message, check the conversation's participants
+        if hasattr(obj, 'conversation') and hasattr(obj.conversation, 'participants'):
+            if request.method in SAFE_METHODS or request.method in ['PATCH', 'DELETE']:
+                return request.user in obj.conversation.participants.all()
+
+        # Default fallback
+        return False
