@@ -1,6 +1,6 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Message, Conversation
 from .serializers import MessageSerializer, ConversationSerializer
@@ -9,10 +9,7 @@ from .pagination import MessagePagination
 from .filters import MessageFilter
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    Handles sending, viewing, updating, and deleting messages.
-    Only participants of the conversation can access these messages.
-    """
+    queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     pagination_class = MessagePagination
@@ -22,33 +19,23 @@ class MessageViewSet(viewsets.ModelViewSet):
     ordering = ['-sent_at']
 
     def get_queryset(self):
-        """
-        Filters messages to only those within a conversation the user is part of.
-        """
         conversation_id = self.request.query_params.get('conversation_id')
         if conversation_id:
-            try:
-                conversation = Conversation.objects.get(id=conversation_id)
-                if self.request.user in conversation.participants.all():
-                    return Message.objects.filter(conversation=conversation)
-                else:
-                    # Forbidden if user is not a participant
-                    return Message.objects.none()
-            except Conversation.DoesNotExist:
+            conversation = Conversation.objects.filter(id=conversation_id).first()
+            if conversation and self.request.user in conversation.participants.all():
+                return Message.objects.filter(conversation=conversation)
+            else:
                 return Message.objects.none()
-        return Message.objects.none()
+        return super().get_queryset()
 
+    def create(self, request, *args, **kwargs):
+        conversation_id = request.data.get('conversation')
+        conversation = Conversation.objects.filter(id=conversation_id).first()
+        if not conversation or request.user not in conversation.participants.all():
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
 
 class ConversationViewSet(viewsets.ModelViewSet):
-    """
-    Handles viewing and creating conversations.
-    Only participants can access their conversations.
-    """
+    queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-
-    def get_queryset(self):
-        """
-        Returns conversations the current user is a participant in.
-        """
-        return Conversation.objects.filter(participants=self.request.user)
