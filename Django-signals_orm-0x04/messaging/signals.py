@@ -28,3 +28,16 @@ def cleanup_on_delete(sender, instance, **kwargs):
     Message.objects.filter(receiver=instance).delete()
     Notification.objects.filter(user=instance).delete()
     MessageHistory.objects.filter(message__sender=instance).delete()
+
+
+@receiver(pre_save, sender=Message)
+def log_message_edit(sender, instance, **kwargs):
+    if instance.pk:
+        old_message = Message.objects.get(pk=instance.pk)
+        if old_message.content != instance.content:
+            instance.edited = True
+            MessageHistory.objects.create(
+                message=old_message,
+                old_content=old_message.content,
+                edited_by=instance.sender  # assuming sender made the edit
+            )
