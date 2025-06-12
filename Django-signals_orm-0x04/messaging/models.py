@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from .managers import UnreadMessagesManager
 
 class Message(models.Model):
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
@@ -20,6 +21,7 @@ class MessageHistory(models.Model):
     old_content = models.TextField()
     edited_at = models.DateTimeField(auto_now_add=True)
     edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    unread = UnreadMessagesManager()
 
     def __str__(self):
         return f"Edit history for message ID {self.message.id}"
