@@ -1,21 +1,21 @@
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
+# messaging/views.py
+
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
 from .models import Message
+from django.db.models import Prefetch
 
+@cache_page(60)  # ✅ Cache for 60 seconds
 @login_required
-def inbox(request):
-    messages = Message.objects.filter(receiver=request.user)\
-        .select_related('sender')\
-        .prefetch_related('histories')
-    return render(request, 'messaging/inbox.html', {'messages': messages})
+def conversation_view(request):
+    user = request.user
+    # ✅ Use select_related for foreign keys, prefetch_related for reverse relations
+    messages = Message.objects.filter(receiver=user).select_related('sender').prefetch_related(
+        Prefetch('replies')
+    ).only('sender__username', 'receiver__username', 'content', 'timestamp', 'parent_message')
 
-@login_required
-def unread_messages_view(request):
-    unread_msgs = Message.unread.unread_for_user(request.user)
-    return render(request, 'messaging/unread.html', {'unread_messages': unread_msgs})
-
-@login_required
-def delete_user(request):
-    request.user.delete()
-    return redirect('home')  # Replace 'home' with your home page route name
+    context = {
+        'messages': messages,
+    }
+    return render(request, 'messaging/conversation.html', context)

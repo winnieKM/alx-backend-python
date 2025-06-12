@@ -1,0 +1,10 @@
+<!-- messaging/templates/messaging/conversation.html -->
+<h2>Conversation</h2>
+<ul>
+  {% for msg in messages %}
+    <li>
+      <strong>{{ msg.sender.username }}</strong>: {{ msg.content }}
+      <br><small>{{ msg.timestamp }}</small>
+    </li>
+  {% endfor %}
+</ul>
