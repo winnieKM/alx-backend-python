@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Scaling the messaging-app deployment to 3 replicas..."
+kubectl scale deployment messaging-app --replicas=3
+
+echo
+echo "Listing all pods:"
+kubectl get pods
+
+echo
+echo "Running load test using wrk..."
+echo "Note: You must have wrk installed and your service must be accessible"
+wrk http://$(minikube ip):30000  # Replace 30000 with your NodePort if different
+
+echo
+echo "Monitoring pod resource usage:"
+kubectl top pods
