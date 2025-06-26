@@ -1,18 +1,22 @@
-# Use official Python 3.10 image
+# messaging_app/Dockerfile
 FROM python:3.10
 
-# Set working directory inside the container
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy and install dependencies
+# Copy requirements.txt from the root of messaging_app/
 COPY requirements.txt .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files to the container
+# Copy the full Django project
 COPY . .
 
-# Expose Django's default port
+# Open port 8000
 EXPOSE 8000
 
-# Run the development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Start Django server using correct settings path
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000", "--settings=messaging_app.settings"]

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Applying updated blue deployment with image v2.0..."
+kubectl apply -f blue_deployment.yaml
+
+echo "Monitoring rollout status..."
+kubectl rollout status deployment/messaging-app-blue
+
+echo "Sending test requests with curl..."
+for i in {1..5}
+do
+  curl -s http://$(minikube ip)/api/ || echo "Request failed"
+  sleep 1
+done
+
+echo "Current pods:"
+kubectl get pods
