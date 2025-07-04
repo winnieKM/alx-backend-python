@@ -6,6 +6,8 @@ pipeline {
             steps {
                 echo 'Cloning repository...'
                 git credentialsId: 'github-ssh-key', url: 'git@github.com:winnieKM/alx-backend-python.git'
+                // ✅ REQUIRED by ALX
+                sh 'git branch'
             }
         }
 
@@ -23,7 +25,7 @@ pipeline {
 
         stage('Archive Results') {
             steps {
-                junit '**/test-results.xml'
+                junit 'messaging_app/tests/test-reports/*.xml'
             }
         }
     }
