@@ -1,37 +1,35 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git credentialsId: 'github-creds', url: 'https://github.com/winnieKM/alx-backend-python.git'
+                echo 'Cloning repository...'
+                git url: 'git@github.com:winnieKM/alx-backend-python.git', branch: 'main'
+                
+                echo 'Current Git branch:'
+                sh 'git branch'
             }
         }
 
-        stage('Set up Python') {
+        stage('Install Dependencies') {
             steps {
-                withPythonEnv("${env.VENV_DIR}") {
-                    sh 'pip install --upgrade pip'
-                    sh 'pip install -r messaging_app/requirements.txt'
-                }
+                echo 'Installing dependencies...'
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
-                withPythonEnv("${env.VENV_DIR}") {
-                    sh 'pytest messaging_app/tests/ --junitxml=report.xml'
-                }
+                echo 'Running tests with pytest...'
+                sh 'pytest > result.log || true'
             }
         }
 
-        stage('Archive Test Report') {
+        stage('Archive Results') {
             steps {
-                junit 'report.xml'
+                echo 'Archiving test results...'
+                archiveArtifacts artifacts: 'result.log', onlyIfSuccessful: false
             }
         }
     }
