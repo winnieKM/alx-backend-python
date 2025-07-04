@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_DIR = 'venv'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-creds', url: 'https://github.com/winnieKM/alx-backend-python.git'
+            }
+        }
+
+        stage('Set up Python') {
+            steps {
+                withPythonEnv("${env.VENV_DIR}") {
+                    sh 'pip install --upgrade pip'
+                    sh 'pip install -r messaging_app/requirements.txt'
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                withPythonEnv("${env.VENV_DIR}") {
+                    sh 'pytest messaging_app/tests/ --junitxml=report.xml'
+                }
+            }
+        }
+
+        stage('Archive Test Report') {
+            steps {
+                junit 'report.xml'
+            }
+        }
+    }
+}
